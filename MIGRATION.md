@@ -411,7 +411,7 @@ These changes are encapsulated in the following:
 
 #### Standalone docs files
 
-In Storybook 6.x, to create a standalone docs MDX file, with its own, you created a `.stories.mdx` file, and described it's location with the `Meta` doc block:
+In Storybook 6.x, to create a standalone docs MDX file, you'd have to create a `.stories.mdx` file, and describe its location with the `Meta` doc block:
 
 ```mdx
 import { Meta } from '@storybook/addon-docs';
