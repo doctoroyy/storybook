@@ -405,9 +405,9 @@ It is no longer possible to set `parameters.docs.getContainer()` and `getPage()`
 
 ### Docs Changes
 
-The information heirarchy of docs in Storybook has changed in 7.0. The main difference is that each docs is listed in the sidebar as a separate entry, rather than attached to individual stories.
+The information hierarchy of docs in Storybook has changed in 7.0. The main difference is that each docs is listed in the sidebar as a separate entry, rather than attached to individual stories.
 
-These changes are encaspulated in these changes:
+These changes are encapsulated in the following:
 
 #### Standalone docs files
 
