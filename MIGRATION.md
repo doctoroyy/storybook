@@ -14,6 +14,11 @@
     - [Babel mode v7 by default](#babel-mode-v7-by-default)
     - [7.0 feature flags removed](#70-feature-flags-removed)
     - [Removed docs.getContainer and getPage parameters](#removed-docs-getcontainer-and-getpage-parameters)
+  - [Docs Changes](#docs-changes)
+    - [Standalone docs files](#standalone-docs-files)
+    - [Referencing stories in docs files](#referencing-stories-in-docs-files)
+    - [Configuring the Docs Container](#configuring-the-docs-container)
+    - [External Docs](#external-docs)
 - [From version 6.4.x to 6.5.0](#from-version-64x-to-650)
   - [Vue 3 upgrade](#vue-3-upgrade)
   - [React18 new root API](#react18-new-root-api)
@@ -397,6 +402,136 @@ In 7.0 we've removed the following feature flags:
 #### Removed docs.getContainer and getPage parameters
 
 It is no longer possible to set `parameters.docs.getContainer()` and `getPage()`. Instead use `parameters.docs.container` or `parameters.docs.page` directly.
+
+### Docs Changes
+
+The information heirarchy of docs in Storybook has changed in 7.0. The main difference is that each docs is listed in the sidebar as a separate entry, rather than attached to individual stories.
+
+These changes are encaspulated in these changes:
+
+#### Standalone docs files
+
+In Storybook 6.x, to create a standalone docs MDX file, with its own, you created a `.stories.mdx` file, and described it's location with the `Meta` doc block:
+
+```mdx
+import { Meta } from '@storybook/addon-docs';
+
+<Meta title="Introduction" />
+```
+
+In 7.0, things are a little simpler -- you should call the file `.mdx` (drop the `.stories`). This will mean behind the scenes there is no story attached to this entry. You may also drop the `title` and use autotitle (and leave the `Meta` component out entirely).
+
+Additionally, you can attach a standalone docs entry to a component, using the new `of={}` syntax on the `Meta` component:
+
+```mdx
+import { Meta } from '@storybook/blocks';
+import * as ComponentStories from './some-component.stories';
+
+<Meta of={ComponentStories} />
+```
+
+You can create as many docs entries as you like for a given component. Note that if you attach a docs entry to a component it will replace the automatically generated entry from `DocsPage` (See below).
+
+By default docs entries are listed first for the component. You can sort them using story sorting.
+
+#### Referencing stories in docs files
+
+To reference a story in a MDX file, you should reference it with `of`:
+
+```mdx
+import { Meta, Story } from '@storybook/blocks';
+import * as ComponentStories from './some-component.stories';
+
+<Meta of={ComponentStories} />
+
+<Story of={ComponentStories.standard} />
+```
+
+You can also reference a story from a different component:
+
+```mdx
+import { Meta, Story } from '@storybook/blocks';
+import * as ComponentStories from './some-component.stories';
+import * as SecondComponentStories from './second-component.stories';
+
+<Meta of={ComponentStories} />
+
+<Story of={SecondComponentStories.standard} meta={SecondComponentStories} />
+```
+
+#### Docs Page
+
+In 7.0, rather than rendering each story in "docs view mode", Docs Page operates by adding additional sidebar entries for each component. By default it uses the same template as was used in 6.x, and the entries are entitled `Docs`.
+
+You can configure Docs Page in `main.js`:
+
+```js
+module.exports = {
+  docs: {
+    docsPage: true, // set to default to disable docs page entirely
+    defaultTitle: 'Docs', // set to change the title of generated docs entries
+  },
+};
+```
+
+You can change the default template in the same way as in 6.x, using the `docs.page` parameter.
+
+#### Configuring the Docs Container
+
+As in 6.x, you can override the docs container to configure docs further. This the container that each docs entry is rendered inside:
+
+```js
+// in preview.js
+
+export const parameters = {
+  docs: {
+    container: // your container
+  }
+}
+```
+
+You likely want to use the `DocsContainer` component exported by `@storybook/blocks` and consider the following examples:
+
+**Overriding theme**:
+
+To override the theme, you can continue to use the `docs.theme` parameter.
+
+**Overriding MDX components**
+
+If you want to override the MDX components supplied to your docs page, use the `MDXProvider` from `@mdx-js/react`:
+
+```js
+import { MDXProvider } from '@mdx-js/react';
+import { DocsContainer } from '@storybook/blocks';
+
+export MyDocsContainer = (props) => (
+  <MDXProvider components={yourComponents}>
+    <DocsContainer {...props} />
+  </MDXProvider>
+);
+```
+
+#### External Docs
+
+Storybook 7.0 can be used in the above way in externally created projects (i.e. custom docs sites). Your `.mdx` files defined as above should be portable to other contexts. You simply need to render them in an `ExternalDocs` component:
+
+```js
+// In your project somewhere:
+import { ExternalDocs } from '@storybook/blocks';
+
+// Import all the preview entries from addons that need to operate in your external docs,
+// at a minimum likely your project's and your renderer's.
+import * as reactAnnotations from '@storybook/react/preview';
+import * as previewAnnotations from '../.storybook/preview';
+
+export default function App({ Component, pageProps }) {
+  return (
+    <ExternalDocs projectAnnotationsList={[reactAnnotations, previewAnnotations]}>
+      <Component {...pageProps} />
+    </ExternalDocs>
+  );
+}
+```
 
 ## From version 6.4.x to 6.5.0
 
