@@ -469,10 +469,21 @@ jobs:
       - attach_workspace:
           at: .
       - run:
+          name: Running local registry
+          command: |
+            cd code
+            yarn local-registry --port 6000 --open
+          background: true
+      - run:
+          name: Wait for registry
+          command: |
+            cd code
+            yarn wait-on http://localhost:6000
+      - run:
           name: Preparing Sandboxes
           command: |
             cd code
-            yarn multiplex-templates --cadence ci --parallel --command "yarn sandbox --no-link --no-start --no-publish"
+            yarn multiplex-templates --cadence ci --parallel --script "yarn sandbox --no-link --no-start --no-publish"
       - persist_to_workspace:
           root: .
           paths:
@@ -526,5 +537,5 @@ workflows:
 ## new workflow
       - sandboxes:
           requires:
-            - build
+            - publish
       
