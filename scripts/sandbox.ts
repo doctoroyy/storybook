@@ -3,7 +3,7 @@ import path from 'path';
 import { remove, pathExists, readJSON, writeJSON, ensureSymlink } from 'fs-extra';
 import prompts from 'prompts';
 
-import { getOptionsOrPrompt } from './utils/options';
+import { createOptions, getOptionsOrPrompt } from './utils/options';
 import { executeCLIStep } from './utils/cli-step';
 import { installYarn2, configureYarn2ForVerdaccio, addPackageResolutions } from './utils/yarn';
 import { exec } from './utils/exec';
@@ -31,51 +31,58 @@ const defaultAddons = [
 const sandboxDir = path.resolve(__dirname, '../sandbox');
 const codeDir = path.resolve(__dirname, '../code');
 
+export const options = createOptions({
+  template: {
+    description: 'Which template would you like to use?',
+    values: templates,
+    required: true as const,
+  },
+  addon: {
+    description: 'Which extra addons (beyond the CLI defaults) would you like installed?',
+    values: addons,
+    multiple: true as const,
+  },
+  includeStories: {
+    description: "Include Storybook's own stories?",
+    promptType: (_, { framework }) => framework === 'react',
+  },
+  create: {
+    description: 'Create the template from scratch (rather than degitting it)?',
+  },
+  forceDelete: {
+    description: 'Always delete an existing sandbox, even if it has the same configuration?',
+    promptType: false,
+  },
+  forceReuse: {
+    description: 'Always reuse an existing sandbox, even if it has a different configuration?',
+    promptType: false,
+  },
+  link: {
+    description: 'Link the storybook to the local code?',
+    inverse: true,
+  },
+  publish: {
+    description: 'Publish local code to verdaccio before installing?',
+    inverse: true,
+    promptType: (_, { link }) => !link,
+  },
+  start: {
+    description: 'Start the Storybook?',
+    inverse: true,
+  },
+  build: {
+    description: 'Build the Storybook?',
+  },
+  watch: {
+    description: 'Start building used packages in watch mode as well as the Storybook?',
+  },
+  dryRun: {
+    description: "Don't execute commands, just list them (dry run)?",
+  },
+});
+
 async function getOptions() {
-  return getOptionsOrPrompt('yarn sandbox', {
-    template: {
-      description: 'Which template would you like to use?',
-      values: templates,
-      required: true as const,
-    },
-    addon: {
-      description: 'Which extra addons (beyond the CLI defaults) would you like installed?',
-      values: addons,
-      multiple: true as const,
-    },
-    includeStories: {
-      description: "Include Storybook's own stories?",
-      promptType: (_, { framework }) => framework === 'react',
-    },
-    create: {
-      description: 'Create the template from scratch (rather than degitting it)?',
-    },
-    forceDelete: {
-      description: 'Always delete an existing sandbox, even if it has the same configuration?',
-      promptType: false,
-    },
-    forceReuse: {
-      description: 'Always reuse an existing sandbox, even if it has a different configuration?',
-      promptType: false,
-    },
-    link: {
-      description: 'Link the storybook to the local code?',
-      inverse: true,
-    },
-    start: {
-      description: 'Start the Storybook?',
-      inverse: true,
-    },
-    build: {
-      description: 'Build the Storybook?',
-    },
-    watch: {
-      description: 'Start building used packages in watch mode as well as the Storybook?',
-    },
-    dryRun: {
-      description: "Don't execute commands, just list them (dry run)?",
-    },
-  });
+  return getOptionsOrPrompt('yarn sandbox', options);
 }
 
 const steps = {
@@ -197,7 +204,7 @@ async function addStories(paths: string[], { mainConfig }: { mainConfig: ConfigF
 async function main() {
   const optionValues = await getOptions();
 
-  const { template, forceDelete, forceReuse, link, dryRun } = optionValues;
+  const { template, forceDelete, forceReuse, link, publish, dryRun } = optionValues;
   const cwd = path.join(sandboxDir, template.replace('/', '-'));
 
   const exists = await pathExists(cwd);
@@ -270,11 +277,13 @@ async function main() {
         optionValues: { local: true, start: false },
       });
     } else {
-      await exec('yarn local-registry --publish', { cwd: codeDir }, { dryRun });
+      if (publish) {
+        await exec('yarn local-registry --publish', { cwd: codeDir }, { dryRun });
 
-      // NOTE: this is a background task and will run forever (TODO: sort out logging/exiting)
-      exec('CI=true yarn local-registry --open', { cwd: codeDir }, { dryRun });
-      await exec('yarn wait-on http://localhost:6000', { cwd: codeDir }, { dryRun });
+        // NOTE: this is a background task and will run forever (TODO: sort out logging/exiting)
+        exec('CI=true yarn local-registry --open', { cwd: codeDir }, { dryRun });
+        await exec('yarn wait-on http://localhost:6000', { cwd: codeDir }, { dryRun });
+      }
 
       // We need to add package resolutions to ensure that we only ever install the latest version
       // of any storybook packages as verdaccio is not able to both proxy to npm and publish over
@@ -304,7 +313,7 @@ async function main() {
     });
   }
 
-  const { start } = optionValues;
+  const { start, build } = optionValues;
   if (start) {
     await exec(
       'yarn storybook',
@@ -315,7 +324,7 @@ async function main() {
         errorMessage: `🚨 Starting Storybook failed`,
       }
     );
-  } else {
+  } else if (build) {
     await executeCLIStep(steps.build, { cwd, dryRun });
     // TODO serve
   }
@@ -323,4 +332,6 @@ async function main() {
   // TODO start dev
 }
 
-main().catch((err) => console.error(err));
+if (require.main === module) {
+  main().catch((err) => console.error(err));
+}

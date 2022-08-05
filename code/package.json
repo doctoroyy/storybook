@@ -73,6 +73,7 @@
     "lint:other": "prettier --write '**/*.{css,html,json,md,yml}'",
     "lint:package": "sort-package-json",
     "local-registry": "ts-node --project=../scripts/tsconfig.json ../scripts/run-registry.ts --port 6000",
+    "multiplex-templates": "ts-node ../scripts/multiplex-templates.ts",
     "next-repro": "ts-node ../scripts/next-repro-generators/generate.ts",
     "publish-repros": "ts-node ../scripts/next-repro-generators/publish.ts",
     "publish:debug": "npm run publish:latest -- --npm-tag=debug --no-push",

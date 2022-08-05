@@ -76,6 +76,10 @@ export type OptionValues<TOptions extends OptionSpecifier = OptionSpecifier> = {
   [TKey in keyof TOptions]: OptionValue<TOptions[TKey]>;
 };
 
+export function createOptions<TOptions extends OptionSpecifier>(options: TOptions) {
+  return options;
+}
+
 export function isStringOption(option: Option): option is StringOption {
   return 'values' in option && !('multiple' in option);
 }
