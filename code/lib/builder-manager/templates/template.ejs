@@ -2,13 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="theme-color" content="<%= themeColor %>" />
+
     <title><%= typeof title !== 'undefined'? title : 'Storybook'%></title>
 
     <link rel="shortcut icon" href="./favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <% if (typeof head !== 'undefined') { %> <%- head %> <% } %>
-    
+
     <style>
       #root[hidden],
       #docs-root[hidden] {
@@ -19,7 +21,6 @@
     <% files.css.forEach(file => { %>
     <link href="<%= file %>" rel="stylesheet" />
     <% }); %>
-
   </head>
   <body>
     <div id="root"></div>
@@ -34,11 +35,11 @@
       <% } %>
     </script>
     <% } %>
-    
+
     <script src="./sb-manager/runtime.mjs" type="module"></script>
 
     <% files.js.forEach(file => { %>
-      <script src="<%= file %>" type="module"></script>
+    <script src="<%= file %>" type="module"></script>
     <% }); %>
   </body>
 </html>

@@ -66,6 +66,7 @@ export const renderHTML = async (
 
   return render(templateRef, {
     title: titleRef ? `${titleRef} - Storybook` : 'Storybook',
+    themeColor: '#F6F9FC',
     files: {
       js: filesRef.filter((f) => f.path.match(/\.mjs$/)).map((f) => `./sb-addons/${f.path}`),
       css: filesRef.filter((f) => f.path.match(/\.css$/)).map((f) => `./sb-addons/${f.path}`),

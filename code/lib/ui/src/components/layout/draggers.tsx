@@ -29,11 +29,11 @@ const Handle = styled.div<{ isDragging: boolean; axis: Axis; reverse?: boolean }
     axis === 'x'
       ? {
           height: '100%',
-          width: theme.layoutMargin,
-          marginLeft: 0,
+          width: 10,
+          marginLeft: -10,
         }
       : {
-          height: theme.layoutMargin,
+          height: 10,
           width: '100%',
           marginTop: 0,
         },

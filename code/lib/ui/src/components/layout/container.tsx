@@ -95,7 +95,8 @@ const Paper = styled.div<{ isFullscreen: boolean }>(
           borderRadius: 0,
         }
       : {
-          borderRadius: theme.appBorderRadius,
+          borderTopLeftRadius: theme.appBorderRadius,
+          borderBottomLeftRadius: theme.appBorderRadius,
           overflow: 'hidden',
           boxShadow: '0 1px 5px 0 rgba(0, 0, 0, 0.1)',
         }
@@ -492,7 +493,7 @@ class Layout extends Component<LayoutProps, LayoutState> {
     const { children, bounds, options, theme, viewMode, panelCount } = this.props;
     const { isDragging, resizerNav, resizerPanel } = this.state;
 
-    const margin = theme.layoutMargin;
+    const margin = 0;
     const isNavHidden = options.isFullscreen || !options.showNav;
     const isPanelHidden =
       options.isFullscreen || !options.showPanel || viewMode !== 'story' || panelCount === 0;
@@ -559,7 +560,7 @@ class Layout extends Component<LayoutProps, LayoutState> {
                   ? {
                       left: navX + margin,
                       width: bounds.width - navX - 2 * margin,
-                      marginTop: -margin,
+                      marginTop: -10,
                     }
                   : {
                       marginLeft: 1,
