@@ -43,16 +43,19 @@ export const options = createOptions({
 });
 
 async function run() {
-  const { script: commandline, parallel } = await getOptionsOrPrompt(
-    'yarn multiplex-templates',
-    options
-  );
+  const {
+    cadence,
+    script: commandline,
+    parallel,
+  } = await getOptionsOrPrompt('yarn multiplex-templates', options);
 
   const command = await parseCommand(commandline);
 
-  const allTemplates = Object.keys(TEMPLATES);
-  // TODO -- filter by cadence
-  const templates = filterDataForCurrentCircleCINode(allTemplates);
+  const allTemplates = Object.keys(TEMPLATES) as (keyof typeof TEMPLATES)[];
+  const cadenceTemplates = allTemplates.filter((template) =>
+    TEMPLATES[template].cadence.includes(cadence)
+  );
+  const templates = filterDataForCurrentCircleCINode(cadenceTemplates);
 
   const toAwait = [];
   for (const template of templates) {
