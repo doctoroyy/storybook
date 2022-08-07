@@ -33,51 +33,65 @@ const codeDir = path.resolve(__dirname, '../code');
 
 export const options = createOptions({
   template: {
+    type: 'string',
     description: 'Which template would you like to use?',
     values: templates,
     required: true as const,
   },
   addon: {
+    type: 'string[]',
     description: 'Which extra addons (beyond the CLI defaults) would you like installed?',
     values: addons,
-    multiple: true as const,
   },
   includeStories: {
+    type: 'boolean',
     description: "Include Storybook's own stories?",
-    promptType: (_, { framework }) => framework === 'react',
+    promptType: (_, { template }) => template === 'react',
   },
   create: {
+    type: 'boolean',
     description: 'Create the template from scratch (rather than degitting it)?',
   },
   forceDelete: {
+    type: 'boolean',
     description: 'Always delete an existing sandbox, even if it has the same configuration?',
     promptType: false,
   },
   forceReuse: {
+    type: 'boolean',
     description: 'Always reuse an existing sandbox, even if it has a different configuration?',
     promptType: false,
   },
   link: {
+    type: 'boolean',
     description: 'Link the storybook to the local code?',
     inverse: true,
   },
   publish: {
+    type: 'boolean',
     description: 'Publish local code to verdaccio before installing?',
     inverse: true,
     promptType: (_, { link }) => !link,
   },
   start: {
+    type: 'boolean',
     description: 'Start the Storybook?',
     inverse: true,
   },
   build: {
+    type: 'boolean',
     description: 'Build the Storybook?',
+    promptType: (_, { start }) => !start,
   },
   watch: {
+    type: 'boolean',
     description: 'Start building used packages in watch mode as well as the Storybook?',
+    promptType: (_, { start }) => start,
   },
   dryRun: {
+    type: 'boolean',
     description: "Don't execute commands, just list them (dry run)?",
+    promptType: false,
   },
 });
 
@@ -91,38 +105,40 @@ const steps = {
     description: 'Bootstrapping Template',
     icon: '👷',
     hasArgument: true,
-    options: {
-      // TODO allow string valued options without fixed values
-      output: { values: [] as string[] },
+    options: createOptions({
+      output: { type: 'string' },
       // TODO allow default values for strings
-      branch: { values: ['next'] },
-    },
+      branch: { type: 'string', values: ['next'] },
+    }),
   },
   add: {
     command: 'add',
     description: 'Adding addon',
     icon: '+',
     hasArgument: true,
-    options: {},
+    options: createOptions({}),
   },
   link: {
     command: 'link',
     description: 'Linking packages',
     icon: '🔗',
     hasArgument: true,
-    options: { local: {}, start: { inverse: true } },
+    options: createOptions({
+      local: { type: 'boolean' },
+      start: { type: 'boolean', inverse: true },
+    }),
   },
   build: {
     command: 'build',
     description: 'Building Storybook',
     icon: '🔨',
-    options: {},
+    options: createOptions({}),
   },
   dev: {
     command: 'dev',
     description: 'Starting Storybook',
     icon: '🖥 ',
-    options: {},
+    options: createOptions({}),
   },
 };
 

@@ -4,7 +4,7 @@ import { filterTemplates, parseCommand } from './multiplex-templates';
 import type { Templates } from './multiplex-templates';
 
 jest.mock('../code/lib/cli/src/repro-templates', () => () => ({}));
-const mockOptions = { foo: { values: ['bar', 'baz'] } };
+const mockOptions = { foo: { type: 'string', values: ['bar', 'baz'] } };
 jest.mock('./sandbox', () => ({ options: mockOptions }));
 
 describe('parseCommand', () => {

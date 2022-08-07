@@ -40,16 +40,17 @@ export async function parseCommand(commandline: string) {
 
 export const options = createOptions({
   cadence: {
+    type: 'string',
     description: 'What cadence are we running on (i.e. which templates should we use)?',
     values: ['ci', 'daily', 'weekly'] as const,
-    required: true as const,
+    required: true,
   },
   script: {
+    type: 'string',
     description: 'What command are we running?',
-    // FIXME: totally not right, just a placeholder until we are allowed arbitrarily valued string options
-    values: ['yarn sandbox --no-link --no-start --no-publish'],
   },
   parallel: {
+    type: 'boolean',
     description: 'Run commands in parallel?',
   },
 });
@@ -71,7 +72,7 @@ async function run() {
   } = await getOptionsOrPrompt('yarn multiplex-templates', options);
 
   const command = await parseCommand(commandline);
-  const templates = filterTemplates(TEMPLATES, cadence as Cadence, command.scriptName);
+  const templates = filterTemplates(TEMPLATES, cadence, command.scriptName);
 
   const toAwait = [];
   for (const template of Object.keys(templates)) {

@@ -1,43 +1,49 @@
 import { createCommand } from 'commander';
 import { describe, it, expect } from '@jest/globals';
 
-import {
-  getOptions,
-  areOptionsSatisfied,
-  getCommand,
-  OptionValues,
-  MaybeOptionValues,
-} from './options';
+import { createOptions, getOptions, areOptionsSatisfied, getCommand } from './options';
+import type { OptionValues, MaybeOptionValues } from './options';
 
-const allOptions = {
+const allOptions = createOptions({
   first: {
+    type: 'boolean',
     description: 'first',
   },
   second: {
+    type: 'boolean',
     description: 'second',
     inverse: true,
   },
   third: {
+    type: 'string',
     description: 'third',
-    values: ['one', 'two', 'three'],
+    values: ['one', 'two', 'three'] as const,
     required: true as const,
   },
   fourth: {
+    type: 'string',
     description: 'fourth',
-    values: ['a', 'b', 'c'],
-    multiple: true as const,
   },
-};
+  fifth: {
+    type: 'string[]',
+    description: 'fifth',
+    values: ['a', 'b', 'c'] as const,
+  },
+  sixth: {
+    type: 'string[]',
+    description: 'sixth',
+  },
+});
 
 // TS "tests"
 // deepscan-disable-next-line
 function test(mv: MaybeOptionValues<typeof allOptions>, v: OptionValues<typeof allOptions>) {
-  console.log(mv.first, mv.second, mv.third, mv.fourth);
+  console.log(mv.first, mv.second, mv.third, mv.fourth, mv.fifth, mv.sixth);
   // @ts-expect-error as it's not allowed
-  console.log(mv.fifth);
-  console.log(v.first, v.second, v.third, v.fourth);
+  console.log(mv.seventh);
+  console.log(v.first, v.second, v.third, v.fourth, v.fifth, v.sixth);
   // @ts-expect-error as it's not allowed
-  console.log(v.fifth);
+  console.log(v.seventh);
 }
 
 describe('getOptions', () => {
@@ -81,21 +87,21 @@ describe('getOptions', () => {
 
   it('deals with multiple string options', () => {
     expect(
-      getOptions(createCommand(), allOptions, ['command', 'name', '--fourth', 'a'])
+      getOptions(createCommand(), allOptions, ['command', 'name', '--fifth', 'a'])
     ).toMatchObject({
-      fourth: ['a'],
+      fifth: ['a'],
     });
 
     expect(
-      getOptions(createCommand(), allOptions, ['command', 'name', '--fourth', 'a', '--fourth', 'b'])
+      getOptions(createCommand(), allOptions, ['command', 'name', '--fifth', 'a', '--fifth', 'b'])
     ).toMatchObject({
-      fourth: ['a', 'b'],
+      fifth: ['a', 'b'],
     });
   });
 
   it('disallows invalid multiple string options', () => {
     expect(() =>
-      getOptions(createCommand(), allOptions, ['command', 'name', '--fourth', 'random'])
+      getOptions(createCommand(), allOptions, ['command', 'name', '--fifth', 'random'])
     ).toThrow(/Unexpected value/);
   });
 });
@@ -107,7 +113,9 @@ describe('areOptionsSatisfied', () => {
         first: true,
         second: true,
         third: undefined,
-        fourth: ['a', 'c'],
+        fourth: undefined,
+        fifth: ['a', 'c'],
+        sixth: [],
       })
     ).toBe(false);
     expect(
@@ -115,14 +123,16 @@ describe('areOptionsSatisfied', () => {
         first: true,
         second: true,
         third: 'one',
-        fourth: [],
+        fourth: undefined,
+        fifth: [],
+        sixth: [],
       })
     ).toBe(true);
   });
 });
 
 describe('getCommand', () => {
-  const { first, second, third, fourth } = allOptions;
+  const { first, second, third, fifth } = allOptions;
   it('works with boolean options', () => {
     expect(getCommand('node foo', { first, second }, { first: true, second: true })).toBe(
       'node foo --first'
@@ -140,8 +150,8 @@ describe('getCommand', () => {
   });
 
   it('works with multiple string options', () => {
-    expect(getCommand('node foo', { fourth }, { fourth: ['a', 'b'] })).toBe(
-      'node foo --fourth a --fourth b'
+    expect(getCommand('node foo', { fifth }, { fifth: ['a', 'b'] })).toBe(
+      'node foo --fifth a --fifth b'
     );
   });
 
@@ -158,8 +168,8 @@ describe('getCommand', () => {
         first: true,
         second: false,
         third: 'one',
-        fourth: ['a', 'b'],
+        fifth: ['a', 'b'],
       })
-    ).toBe('node foo --first --no-second --third one --fourth a --fourth b');
+    ).toBe('node foo --first --no-second --third one --fifth a --fifth b');
   });
 });
