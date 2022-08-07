@@ -458,7 +458,7 @@ jobs:
             yarn coverage
 
 ## new workflow
-  sandboxes:
+  create-sandboxes:
     executor:
       class: medium+
       name: sb_node_14_browsers
@@ -482,6 +482,7 @@ jobs:
       - run:
           name: Preparing Sandboxes
           command: |
+            mkdir sandbox
             cd code
             yarn multiplex-templates --cadence ci --parallel --script "yarn sandbox --no-link --no-start --no-publish"
       - persist_to_workspace:
@@ -535,7 +536,7 @@ workflows:
             - publish
 
 ## new workflow
-      - sandboxes:
+      - create-sandboxes:
           requires:
             - publish
       

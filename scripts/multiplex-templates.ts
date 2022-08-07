@@ -29,7 +29,7 @@ async function parseCommand(commandline: string) {
 export const options = createOptions({
   cadence: {
     description: 'What cadence are we running on (i.e. which templates should we use)?',
-    values: ['ci', 'daily', 'weekly'],
+    values: ['ci', 'daily', 'weekly'] as const,
     required: true as const,
   },
   script: {
@@ -53,7 +53,7 @@ async function run() {
 
   const allTemplates = Object.keys(TEMPLATES) as (keyof typeof TEMPLATES)[];
   const cadenceTemplates = allTemplates.filter((template) =>
-    TEMPLATES[template].cadence.includes(cadence)
+    TEMPLATES[template].cadence.includes(cadence as typeof options.cadence.values[number])
   );
   const templates = filterDataForCurrentCircleCINode(cadenceTemplates);
 
@@ -83,5 +83,8 @@ async function run() {
 }
 
 if (require.main === module) {
-  run();
+  run().catch((err) => {
+    console.error('Multiplexing failed');
+    console.error(err);
+  });
 }
