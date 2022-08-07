@@ -8,7 +8,18 @@ import { filterDataForCurrentCircleCINode } from './utils/concurrency';
 
 import TEMPLATES from '../code/lib/cli/src/repro-templates';
 
-async function parseCommand(commandline: string) {
+export type Cadence = 'ci' | 'daily' | 'weekly';
+export type Template = {
+  name: string;
+  script: string;
+  cadence?: readonly Cadence[];
+  skipScripts?: string[];
+  // there are other fields but we don't use them here
+};
+export type TemplateKey = string;
+export type Templates = Record<TemplateKey, Template>;
+
+export async function parseCommand(commandline: string) {
   const argv = commandline.split(' ');
 
   const [yarn, scriptName] = argv;
@@ -20,6 +31,7 @@ async function parseCommand(commandline: string) {
   const values = getOptions(command, options as OptionSpecifier, ['yarn', ...argv]);
 
   return {
+    scriptName,
     command: `yarn ${scriptName}`,
     options,
     values,
@@ -42,6 +54,15 @@ export const options = createOptions({
   },
 });
 
+export function filterTemplates(templates: Templates, cadence: Cadence, scriptName: string) {
+  const allTemplates = Object.entries(templates);
+  const cadenceTemplates = allTemplates.filter(([, template]) =>
+    template.cadence.includes(cadence)
+  );
+  const jobTemplates = cadenceTemplates.filter(([, t]) => !t.skipScripts?.includes(scriptName));
+  return Object.fromEntries(filterDataForCurrentCircleCINode(jobTemplates));
+}
+
 async function run() {
   const {
     cadence,
@@ -50,15 +71,10 @@ async function run() {
   } = await getOptionsOrPrompt('yarn multiplex-templates', options);
 
   const command = await parseCommand(commandline);
-
-  const allTemplates = Object.keys(TEMPLATES) as (keyof typeof TEMPLATES)[];
-  const cadenceTemplates = allTemplates.filter((template) =>
-    TEMPLATES[template].cadence.includes(cadence as typeof options.cadence.values[number])
-  );
-  const templates = filterDataForCurrentCircleCINode(cadenceTemplates);
+  const templates = filterTemplates(TEMPLATES, cadence as Cadence, command.scriptName);
 
   const toAwait = [];
-  for (const template of templates) {
+  for (const template of Object.keys(templates)) {
     const toRun = getCommand(command.command, command.options, {
       ...command.values,
       template,
