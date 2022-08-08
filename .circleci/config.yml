@@ -484,13 +484,28 @@ jobs:
           command: |
             mkdir sandbox
             cd code
-            yarn once-per-template --cadence ci --parallel \
+            yarn once-per-template --no-cd --cadence ci --parallel \
               --script "yarn sandbox --no-link --no-start --no-publish"
       - persist_to_workspace:
           root: .
           paths:
             - sandbox
-  
+  smoke-test-sandboxes:
+    executor:
+      class: medium+
+      name: sb_node_14_browsers
+    parallelism: 2
+    steps:
+      - git-shallow-clone/checkout_advanced:
+          clone_options: '--depth 1 --verbose'
+      - attach_workspace:
+          at: .
+      - run:
+          name: Smoke Testing Sandboxes
+          command: |
+            cd code
+            yarn multiplex-templates --cadence ci --junit test-results/smoketest-TEMPLATE.xml \
+              --script "yarn storybook --smoke-test --quiet"
 
 workflows:
   test:
@@ -540,4 +555,7 @@ workflows:
       - create-sandboxes:
           requires:
             - publish
+      - smoke-test-sandboxes:
+          requires:
+            - create-sandboxes
       
