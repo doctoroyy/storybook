@@ -531,7 +531,7 @@ jobs:
               --step "Building" \
               --cadence ci \
               --junit test-results/build.xml \
-              --script "yarn build-storybook --quiet --output-dir='$BUILD_DIR/$TEMPLATE_DIR'"
+              --script "yarn build-storybook --quiet --output-dir='$BUILD_DIR/#TEMPLATE_DIR'"
       - store_test_results:
           path: code/test-results
       - persist_to_workspace:
@@ -557,8 +557,8 @@ jobs:
               --step "Running Chromatic" \
               --cadence ci \
               --script "npx chromatic \
-                --project-token='CHROMATIC_TOKEN_$TEMPLATE_ENV' \
-                --storybook-build-dir='$BUILD_DIR/$TEMPLATE_DIR' \
+                --project-token='\$CHROMATIC_TOKEN_#TEMPLATE_ENV' \
+                --storybook-build-dir='$BUILD_DIR/#TEMPLATE_DIR' \
                 --junit-report='test-results/chromatic.xml'"
       - store_test_results:
           path: code/test-results
