@@ -103,5 +103,6 @@ if (require.main === module) {
   run().catch((err) => {
     console.error('Multiplexing failed');
     console.error(err);
+    process.exit(1);
   });
 }
