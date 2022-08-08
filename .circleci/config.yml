@@ -506,6 +506,29 @@ jobs:
             cd code
             yarn once-per-template --step "Smoke Testing" --cadence ci \
               --junit test-results/smoketest.xml --script "yarn storybook --smoke-test --quiet"
+      - store_test_results:
+          path: code/test-results
+  build-sandboxes:
+    executor:
+      class: medium+
+      name: sb_node_14_browsers
+    parallelism: 2
+    steps:
+      - git-shallow-clone/checkout_advanced:
+          clone_options: '--depth 1 --verbose'
+      - attach_workspace:
+          at: .
+      - run:
+          name: Building Sandboxes
+          command: |
+            BUILD_DIR="$PWD/../built-sandboxes"
+            mkdir $BUILD_DIR
+            cd code
+            yarn once-per-template --step "Building" --cadence ci --junit test-results/build.xml \
+              --script "yarn build-storybook --quiet --output-dir='$BUILD_DIR/$TEMPLATE_DIR'"
+      - store_test_results:
+          path: code/test-results
+
 
 workflows:
   test:
@@ -558,4 +581,6 @@ workflows:
       - smoke-test-sandboxes:
           requires:
             - create-sandboxes
-      
+      - build-sandboxes:
+          requires:
+            - create-sandboxes
