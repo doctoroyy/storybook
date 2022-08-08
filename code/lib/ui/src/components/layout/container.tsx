@@ -99,6 +99,7 @@ const Paper = styled.div<{ isFullscreen: boolean }>(
           borderBottomLeftRadius: theme.appBorderRadius,
           overflow: 'hidden',
           boxShadow: '0 1px 5px 0 rgba(0, 0, 0, 0.1)',
+          transform: 'translateZ(0)',
         }
 );
 
