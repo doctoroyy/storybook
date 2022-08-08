@@ -552,7 +552,6 @@ jobs:
           name: Chromatic (Sandboxes)
           command: |
             BUILD_DIR="$PWD/built-sandboxes"
-            mkdir $BUILD_DIR
             cd code
             yarn once-per-template \
               --step "Running Chromatic" \
