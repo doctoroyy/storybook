@@ -484,7 +484,7 @@ jobs:
           command: |
             mkdir sandbox
             cd code
-            yarn once-per-template --no-cd --cadence ci --parallel \
+            yarn once-per-template --step Building --no-cd --cadence ci --parallel \
               --script "yarn sandbox --no-link --no-start --no-publish"
       - persist_to_workspace:
           root: .
@@ -504,8 +504,8 @@ jobs:
           name: Smoke Testing Sandboxes
           command: |
             cd code
-            yarn multiplex-templates --cadence ci --junit test-results/smoketest-TEMPLATE.xml \
-              --script "yarn storybook --smoke-test --quiet"
+            yarn once-per-template --step Smoke Testing --cadence ci \
+              --junit test-results/smoketest.xml --script "yarn storybook --smoke-test --quiet"
 
 workflows:
   test:

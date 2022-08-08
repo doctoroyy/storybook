@@ -3330,6 +3330,7 @@ __metadata:
     jest-serializer-html: ^7.0.0
     jest-watch-typeahead: ^0.6.1
     js-yaml: ^3.14.1
+    junit-xml: ^1.2.0
     lint-staged: ^10.5.4
     lodash: ^4.17.21
     mocha-list-tests: ^1.0.5
@@ -12898,6 +12899,15 @@ __metadata:
     jstransform: ^11.0.3
     through2: ^2.0.0
   checksum: c861e279841360de1d840157d61d999a5b00aabd678017782f21b5fa63ff2bfb92a2982503ca22d56b5c9a10cef86d86c668ca55089ce3dbe5a5f488e5a8571d
+  languageName: node
+  linkType: hard
+
+"junit-xml@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "junit-xml@npm:1.2.0"
+  dependencies:
+    xml: ^1.0.1
+  checksum: 4e72ffac0f2e77784ab81380f385e9b0757bebaf2d841598423d889fbaf397cc38cd524d5cd9efe7bfeb6b96937b5c497582df6de33f67e2c5ad7f174d3f800f
   languageName: node
   linkType: hard
 

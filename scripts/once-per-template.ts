@@ -2,12 +2,14 @@
 import { Command } from 'commander';
 import execa from 'execa';
 import { resolve, join } from 'path';
+import { getJunitXml } from 'junit-xml';
 
 import { getOptions, getCommand, getOptionsOrPrompt, createOptions } from './utils/options';
 import type { OptionSpecifier } from './utils/options';
 import { filterDataForCurrentCircleCINode } from './utils/concurrency';
 
 import TEMPLATES from '../code/lib/cli/src/repro-templates';
+import { outputFile } from 'fs-extra';
 
 const sandboxDir = resolve(__dirname, '../sandbox');
 
@@ -48,6 +50,10 @@ export async function parseCommand(commandline: string) {
 }
 
 export const options = createOptions({
+  step: {
+    type: 'string',
+    description: 'What type of step are you taking per template (for logging and test results)?',
+  },
   cadence: {
     type: 'string',
     description: 'What cadence are we running on (i.e. which templates should we use)?',
@@ -82,25 +88,64 @@ export function filterTemplates(templates: Templates, cadence: Cadence, scriptNa
   return Object.fromEntries(filterDataForCurrentCircleCINode(jobTemplates));
 }
 
+type RunResult = {
+  template: TemplateKey;
+  timestamp: Date;
+  time: number;
+  ok: boolean;
+  output?: string;
+  err?: Error;
+};
+
 const logger = console;
 async function runCommand(
   command: string,
   execaOptions: execa.Options,
-  { template }: { template: string }
-) {
+  { step, template }: { step: string; template: string }
+): Promise<RunResult> {
+  const timestamp = new Date();
   try {
-    logger.log(`${template}: Running ${command}`);
+    logger.log(`${step} ${template}: Running ${command}`);
 
-    await execa.command(command, execaOptions);
+    const { all } = await execa.command(command, execaOptions);
 
-    console.log(`${template}: Done.`);
+    console.log(`${step} ${template}: Done.`);
+
+    return { template, timestamp, time: (Date.now() - +timestamp) / 1000, ok: true, output: all };
   } catch (err) {
-    console.log(`${template}: Failed.`);
+    console.log(`${step} ${template}: Failed.`);
+    return { template, timestamp, time: (Date.now() - +timestamp) / 1000, ok: false, err };
   }
+}
+
+async function writeJunitXml(step: string, start: Date, results: RunResult[], path: string) {
+  const junitXml = getJunitXml({
+    time: (Date.now() - +start) / 1000,
+    name: `${step} Templates`,
+    suites: results.map(({ template, timestamp, time, ok, err, output }) => ({
+      name: template,
+      timestamp,
+      time,
+      testCases: [
+        {
+          name: `${step} ${template}`,
+          assertions: 1,
+          time,
+          systemOut: output?.split('\n'),
+          ...(!ok && {
+            errors: [err],
+          }),
+        },
+      ],
+    })),
+  });
+  await outputFile(path, junitXml);
+  console.log(`Test results written to ${resolve(path)}`);
 }
 
 async function run() {
   const {
+    step = 'Testing',
     cadence,
     script: commandline,
     parallel,
@@ -111,6 +156,7 @@ async function run() {
   const command = await parseCommand(commandline);
   const templates = filterTemplates(TEMPLATES, cadence, command.scriptName);
 
+  const start = new Date();
   const toAwait = [];
   for (const template of Object.keys(templates)) {
     let toRun = command.command;
@@ -126,15 +172,22 @@ async function run() {
     toRun = toRun.replace('TEMPLATE_ENV', template.toUpperCase().replace(/\/-/, '_'));
     toRun = toRun.replace('TEMPLATE', template);
 
-    const execaOptions = cd ? { cwd: join(sandboxDir, template) } : {};
+    const execaOptions = cd ? { cwd: join(sandboxDir, template.replace('/', '-')) } : {};
     if (parallel) {
-      toAwait.push(runCommand(toRun, execaOptions, { template }));
+      toAwait.push(runCommand(toRun, execaOptions, { step, template }));
     } else {
-      await runCommand(toRun, { stdio: 'inherit', ...execaOptions }, { template });
+      toAwait.push(
+        Promise.resolve(
+          await runCommand(toRun, { stdio: 'inherit', ...execaOptions }, { step, template })
+        )
+      );
     }
   }
 
-  await Promise.all(toAwait);
+  const results = await Promise.all(toAwait);
+  if (junitPath) {
+    await writeJunitXml(step, start, results, junitPath);
+  }
 }
 
 if (require.main === module) {
