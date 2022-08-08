@@ -1,7 +1,7 @@
 import { describe, it, expect, jest } from '@jest/globals';
 
-import { filterTemplates, parseCommand } from './multiplex-templates';
-import type { Templates } from './multiplex-templates';
+import { filterTemplates, parseCommand } from './once-per-template';
+import type { Templates } from './once-per-template';
 
 jest.mock('../code/lib/cli/src/repro-templates', () => () => ({}));
 const mockOptions = { foo: { type: 'string', values: ['bar', 'baz'] } };
