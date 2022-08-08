@@ -168,12 +168,15 @@ async function run() {
       });
     }
 
-    // Do some simple variable substitution
-    const templateEnv = template.toUpperCase().replace(/\/-/, '_');
+    // Do some simple variable substitution using a #TEMPLATE_X syntax
+    const templateEnv = template.toUpperCase().replace(/\/|-/g, '_');
     toRun = toRun.replace('#TEMPLATE_ENV', templateEnv);
     const templateDir = template.replace('/', '-');
     toRun = toRun.replace('#TEMPLATE_DIR', templateDir);
     toRun = toRun.replace('#TEMPLATE', template);
+
+    // Also substitute environment variables into command
+    toRun = toRun.replace(/\$([A-Z_]+)/, (_, name) => process.env[name]);
 
     const execaOptions = cd ? { cwd: join(sandboxDir, templateDir) } : {};
     if (parallel) {
