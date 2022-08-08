@@ -504,8 +504,11 @@ jobs:
           name: Smoke Testing Sandboxes
           command: |
             cd code
-            yarn once-per-template --step "Smoke Testing" --cadence ci \
-              --junit test-results/smoketest.xml --script "yarn storybook --smoke-test --quiet"
+            yarn once-per-template \
+              --step "Smoke Testing" \
+              --cadence ci \
+              --junit test-results/smoketest.xml \
+              --script "yarn storybook --smoke-test --quiet"
       - store_test_results:
           path: code/test-results
   build-sandboxes:
@@ -521,11 +524,43 @@ jobs:
       - run:
           name: Building Sandboxes
           command: |
-            BUILD_DIR="$PWD/../built-sandboxes"
+            BUILD_DIR="$PWD/built-sandboxes"
             mkdir $BUILD_DIR
             cd code
-            yarn once-per-template --step "Building" --cadence ci --junit test-results/build.xml \
+            yarn once-per-template \
+              --step "Building" \
+              --cadence ci \
+              --junit test-results/build.xml \
               --script "yarn build-storybook --quiet --output-dir='$BUILD_DIR/$TEMPLATE_DIR'"
+      - store_test_results:
+          path: code/test-results
+      - persist_to_workspace:
+          root: .
+          paths:
+            - built-sandboxes
+  chromatic-sandboxes:
+    executor:
+      class: medium+
+      name: sb_node_14_browsers
+    parallelism: 2
+    steps:
+      - git-shallow-clone/checkout_advanced:
+          clone_options: '--depth 1 --verbose'
+      - attach_workspace:
+          at: .
+      - run:
+          name: Chromatic (Sandboxes)
+          command: |
+            BUILD_DIR="$PWD/built-sandboxes"
+            mkdir $BUILD_DIR
+            cd code
+            yarn once-per-template \
+              --step "Running Chromatic" \
+              --cadence ci \
+              --script "npx chromatic \
+                --project-token='CHROMATIC_TOKEN_$TEMPLATE_ENV' \
+                --storybook-build-dir='$BUILD_DIR/$TEMPLATE_DIR' \
+                --junit-report='test-results/chromatic.xml'"
       - store_test_results:
           path: code/test-results
 

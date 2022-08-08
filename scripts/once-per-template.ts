@@ -170,10 +170,10 @@ async function run() {
 
     // Do some simple variable substitution
     const templateEnv = template.toUpperCase().replace(/\/-/, '_');
-    toRun = toRun.replace('TEMPLATE_ENV', templateEnv);
+    toRun = toRun.replace('$TEMPLATE_ENV', templateEnv);
     const templateDir = template.replace('/', '-');
-    toRun = toRun.replace('TEMPLATE_DIR', templateDir);
-    toRun = toRun.replace('TEMPLATE', template);
+    toRun = toRun.replace('$TEMPLATE_DIR', templateDir);
+    toRun = toRun.replace('$TEMPLATE', template);
 
     const execaOptions = cd ? { cwd: join(sandboxDir, templateDir) } : {};
     if (parallel) {
