@@ -504,7 +504,7 @@ jobs:
           name: Smoke Testing Sandboxes
           command: |
             cd code
-            yarn once-per-template --step Smoke Testing --cadence ci \
+            yarn once-per-template --step "Smoke Testing" --cadence ci \
               --junit test-results/smoketest.xml --script "yarn storybook --smoke-test --quiet"
 
 workflows:
