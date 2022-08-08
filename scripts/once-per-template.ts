@@ -1,12 +1,15 @@
 /* eslint-disable no-restricted-syntax, no-await-in-loop */
 import { Command } from 'commander';
 import execa from 'execa';
+import { resolve, join } from 'path';
 
 import { getOptions, getCommand, getOptionsOrPrompt, createOptions } from './utils/options';
 import type { OptionSpecifier } from './utils/options';
 import { filterDataForCurrentCircleCINode } from './utils/concurrency';
 
 import TEMPLATES from '../code/lib/cli/src/repro-templates';
+
+const sandboxDir = resolve(__dirname, '../sandbox');
 
 export type Cadence = 'ci' | 'daily' | 'weekly';
 export type Template = {
@@ -22,20 +25,26 @@ export type Templates = Record<TemplateKey, Template>;
 export async function parseCommand(commandline: string) {
   const argv = commandline.split(' ');
 
-  const [yarn, scriptName] = argv;
-  if (yarn !== 'yarn') throw new Error('only works with scripts at this point');
+  const [yarnOrNpx, scriptName] = argv;
 
-  const { options } = await import(`./${scriptName}`);
+  try {
+    const { options } = await import(`./${scriptName}`);
 
-  const command = new Command(scriptName);
-  const values = getOptions(command, options as OptionSpecifier, ['yarn', ...argv]);
+    const command = new Command(scriptName);
+    const values = getOptions(command, options as OptionSpecifier, [yarnOrNpx, ...argv]);
 
-  return {
-    scriptName,
-    command: `yarn ${scriptName}`,
-    options,
-    values,
-  };
+    return {
+      scriptName,
+      command: `yarn ${scriptName}`,
+      options,
+      values,
+    };
+  } catch (err) {
+    return {
+      scriptName,
+      command: commandline,
+    };
+  }
 }
 
 export const options = createOptions({
@@ -53,6 +62,15 @@ export const options = createOptions({
     type: 'boolean',
     description: 'Run commands in parallel?',
   },
+  cd: {
+    type: 'boolean',
+    description: 'Change directory into sandbox?',
+    inverse: true,
+  },
+  junit: {
+    type: 'string',
+    description: 'Report results to junit XML file at path',
+  },
 });
 
 export function filterTemplates(templates: Templates, cadence: Cadence, scriptName: string) {
@@ -64,11 +82,30 @@ export function filterTemplates(templates: Templates, cadence: Cadence, scriptNa
   return Object.fromEntries(filterDataForCurrentCircleCINode(jobTemplates));
 }
 
+const logger = console;
+async function runCommand(
+  command: string,
+  execaOptions: execa.Options,
+  { template }: { template: string }
+) {
+  try {
+    logger.log(`${template}: Running ${command}`);
+
+    await execa.command(command, execaOptions);
+
+    console.log(`${template}: Done.`);
+  } catch (err) {
+    console.log(`${template}: Failed.`);
+  }
+}
+
 async function run() {
   const {
     cadence,
     script: commandline,
     parallel,
+    cd,
+    junit: junitPath,
   } = await getOptionsOrPrompt('yarn multiplex-templates', options);
 
   const command = await parseCommand(commandline);
@@ -76,23 +113,24 @@ async function run() {
 
   const toAwait = [];
   for (const template of Object.keys(templates)) {
-    const toRun = getCommand(command.command, command.options, {
-      ...command.values,
-      template,
-    });
+    let toRun = command.command;
 
-    console.log(`Running ${toRun}`);
+    if (command.options) {
+      toRun = getCommand(command.command, command.options, {
+        ...command.values,
+        template,
+      });
+    }
 
+    // Do some simple variable substitution
+    toRun = toRun.replace('TEMPLATE_ENV', template.toUpperCase().replace(/\/-/, '_'));
+    toRun = toRun.replace('TEMPLATE', template);
+
+    const execaOptions = cd ? { cwd: join(sandboxDir, template) } : {};
     if (parallel) {
-      // Don't pipe stdio as it'll get interleaved
-      toAwait.push(
-        (async () => {
-          await execa.command(toRun);
-          console.log(`Done with ${toRun}`);
-        })()
-      );
+      toAwait.push(runCommand(toRun, execaOptions, { template }));
     } else {
-      await execa.command(toRun, { stdio: 'inherit' });
+      await runCommand(toRun, { stdio: 'inherit', ...execaOptions }, { template });
     }
   }
 
