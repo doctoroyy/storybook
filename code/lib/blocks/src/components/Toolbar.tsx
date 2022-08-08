@@ -75,7 +75,6 @@ const Eject: FC<EjectProps> = ({ baseUrl, storyId }) => (
 );
 
 const Bar = styled(FlexBar)({
-  borderRadius: 40,
   position: 'absolute',
   left: 0,
   right: 0,

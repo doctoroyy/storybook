@@ -9,9 +9,9 @@ import { Draggable, Handle, DraggableData, DraggableEvent } from './draggers';
 const MIN_NAV_WIDTH = 200; // visually there's an additional 10px due to the canvas' left margin
 const MIN_CANVAS_WIDTH = 200; // visually it's 10px less due to the canvas' left margin
 const MIN_CANVAS_HEIGHT = 200; // visually it's 50px less due to the canvas toolbar and top margin
-const MIN_PANEL_WIDTH = 200; // visually it's 10px less due to the canvas' right margin
+const MIN_PANEL_WIDTH = 220; // visually it's 10px less due to the canvas' right margin
 const MIN_PANEL_HEIGHT = 200; // visually it's 50px less due to the panel toolbar and bottom margin
-const DEFAULT_NAV_WIDTH = 220;
+const DEFAULT_NAV_WIDTH = 230;
 const DEFAULT_PANEL_WIDTH = 400;
 
 const Pane = styled.div<{
