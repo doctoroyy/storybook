@@ -85,6 +85,14 @@ describe('getOptions', () => {
     ).toThrow(/Unexpected value/);
   });
 
+  it('allows arbitrary string options when values are not specified', () => {
+    expect(
+      getOptions(createCommand(), allOptions, ['command', 'name', '--fourth', 'random'])
+    ).toMatchObject({
+      fourth: 'random',
+    });
+  });
+
   it('deals with multiple string options', () => {
     expect(
       getOptions(createCommand(), allOptions, ['command', 'name', '--fifth', 'a'])
@@ -103,6 +111,14 @@ describe('getOptions', () => {
     expect(() =>
       getOptions(createCommand(), allOptions, ['command', 'name', '--fifth', 'random'])
     ).toThrow(/Unexpected value/);
+  });
+
+  it('allows arbitrary multiple string options when values are not specified', () => {
+    expect(
+      getOptions(createCommand(), allOptions, ['command', 'name', '--sixth', 'random'])
+    ).toMatchObject({
+      sixth: ['random'],
+    });
   });
 });
 

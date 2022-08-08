@@ -121,7 +121,7 @@ export function getOptions<TOptions extends OptionSpecifier>(
       if (option.type === 'boolean') return acc.option(flags, option.description, !!option.inverse);
 
       const checkStringValue = (raw: string) => {
-        if (!option.values.includes(raw))
+        if (option.values && !option.values.includes(raw))
           throw new Error(`Unexpected value '${raw}' for option '${key}'`);
         return raw;
       };
